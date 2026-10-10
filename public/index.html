@@ -1,10 +1,139 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Ring Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Ring Radar</h1>
+  <div id="app">
+    <!-- ============ HEADER ============ -->
+    <header id="header">
+      <div class="brand">
+        <span class="brand-ring" aria-hidden="true"></span>
+        <span class="brand-name">Ring Radar</span>
+        <span class="brand-tag">FRAUD OPERATIONS · BANK SANDBOX</span>
+      </div>
+      <div class="live">
+        <span class="live-dot" id="live-dot"></span>
+        <span id="live-label">Connecting…</span>
+        <span id="clock">--:--:--</span>
+      </div>
+      <div class="kpis" id="kpis">
+        <div class="kpi"><div class="kpi-num" id="kpi-scored">0</div><div class="kpi-lbl">Transfers scored</div></div>
+        <div class="kpi"><div class="kpi-num" id="kpi-ring">0</div><div class="kpi-lbl">Active ring</div></div>
+        <div class="kpi"><div class="kpi-num" id="kpi-frozen">0</div><div class="kpi-lbl">Accounts frozen</div></div>
+        <div class="kpi"><div class="kpi-num money-good" id="kpi-stopped">$0</div><div class="kpi-lbl">Money stopped</div></div>
+        <div class="kpi"><div class="kpi-num" id="kpi-lost">$0</div><div class="kpi-lbl">Cashed out</div></div>
+        <div class="kpi"><div class="kpi-num" id="kpi-time">—</div><div class="kpi-lbl">Detect → freeze</div></div>
+      </div>
+    </header>
+
+    <!-- ============ LEFT COLUMN ============ -->
+    <section id="left" class="col">
+      <div class="panel alert" id="alert-card">
+        <div class="alert-head"><span class="alert-status" id="alert-status">WATCHING</span></div>
+        <div class="alert-title" id="alert-title">Setting up…</div>
+        <div class="alert-sub" id="alert-sub">Connecting to the engine.</div>
+        <div class="progress" id="alert-progress" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <div class="panel steps-panel">
+        <div class="panel-label-row"><span class="panel-label">Response</span><span class="panel-label dim" id="steps-mode">AUTO</span></div>
+        <ul class="steps" id="steps"></ul>
+      </div>
+
+      <div class="panel feed-panel">
+        <div class="panel-label-row"><span class="panel-label">Live transfers</span><span class="panel-label dim">Risk</span></div>
+        <ul class="feed" id="feed"><li class="empty">Waiting for transfers…</li></ul>
+      </div>
+
+      <div class="controls" id="controls">
+        <button class="btn btn-primary" id="btn-launch">Launch attack</button>
+        <button class="btn" id="btn-reset">New run</button>
+        <button class="btn" id="btn-pause">Pause</button>
+      </div>
+    </section>
+
+    <!-- ============ CENTER COLUMN ============ -->
+    <section id="center" class="col">
+      <div class="map-header">
+        <span class="map-title">Payment network · last 15 min</span>
+        <div class="legend">
+          <span class="lg"><i class="dot dot-normal"></i>Normal</span>
+          <span class="lg"><i class="dot dot-victim"></i>Victim</span>
+          <span class="lg"><i class="dot dot-ring"></i>Ring</span>
+          <span class="lg"><i class="dot dot-frozen"></i>Frozen</span>
+        </div>
+        <div class="tabs">
+          <button class="tab active" data-tab="network">Network</button>
+          <button class="tab" data-tab="trail">Money trail</button>
+          <button class="tab" data-tab="case">Case</button>
+        </div>
+      </div>
+
+      <div class="map-wrap" id="map-wrap">
+        <svg id="map" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+          <g id="g-halo"></g>
+          <g id="g-edges"></g>
+          <g id="g-pulses"></g>
+          <g id="g-nodes"></g>
+          <g id="g-labels"></g>
+        </svg>
+        <div class="map-empty" id="map-empty">Waiting for the engine to send the network…</div>
+      </div>
+
+      <div class="trail-strip">
+        <div class="trail-head">
+          <span class="panel-label">Where each victim's money went</span>
+          <span class="panel-label dim" id="trail-summary"></span>
+        </div>
+        <div class="trail-cards" id="trail-cards"><div class="empty">No victims yet.</div></div>
+      </div>
+    </section>
+
+    <!-- ============ RIGHT COLUMN ============ -->
+    <section id="right" class="col">
+      <div class="agent-head">
+        <span class="panel-label">Agent · live iMessage</span>
+        <span class="photon" id="photon"><span class="photon-dot"></span><span id="photon-label">Photon</span></span>
+      </div>
+      <div class="phone-status" id="phone-status">Victim phone — · Holder phone —</div>
+
+      <div class="phone-toggle">
+        <button class="pill active" data-thread="holder">Holder</button>
+        <button class="pill" data-thread="victim">Victim</button>
+      </div>
+
+      <div class="iphone">
+        <div class="iphone-notch"></div>
+        <div class="iphone-screen">
+          <div class="imsg-contact">
+            <div class="imsg-avatar">RR</div>
+            <div class="imsg-name">Ring Radar · Your Bank</div>
+            <div class="imsg-sub">iMessage</div>
+          </div>
+          <div class="bubbles" id="bubbles"><div class="empty">No messages yet.</div></div>
+        </div>
+      </div>
+
+      <div class="panel learned">
+        <div class="panel-label-row"><span class="panel-label">What the agent learned</span><span class="panel-label dim">Gemini</span></div>
+        <div id="learned-body" class="learned-empty">Waiting for the account holder to reply.</div>
+        <div class="learned-actions">
+          <button class="btn" id="btn-release" disabled>Release</button>
+          <button class="btn btn-danger" id="btn-police" disabled>Send case to police</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
