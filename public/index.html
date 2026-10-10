@@ -44,6 +44,8 @@
         </div>
       </div>
 
+      <div class="nessie-chip" id="nessie-chip"></div>
+
       <div class="panel steps-panel">
         <div class="panel-label-row"><span class="panel-label">Response</span><span class="panel-label dim" id="steps-mode">AUTO</span></div>
         <ul class="steps" id="steps"></ul>
@@ -80,12 +82,19 @@
 
       <div class="map-wrap" id="map-wrap">
         <svg id="map" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ff4d5e" stop-opacity="0.28" />
+              <stop offset="100%" stop-color="#ff4d5e" stop-opacity="0" />
+            </radialGradient>
+          </defs>
           <g id="g-halo"></g>
           <g id="g-edges"></g>
           <g id="g-pulses"></g>
           <g id="g-nodes"></g>
           <g id="g-labels"></g>
         </svg>
+        <div class="ring-card" id="ring-card" hidden></div>
         <div class="map-empty" id="map-empty">Waiting for the engine to send the network…</div>
       </div>
 
@@ -130,6 +139,11 @@
           <button class="btn" id="btn-release" disabled>Release</button>
           <button class="btn btn-danger" id="btn-police" disabled>Send case to police</button>
         </div>
+      </div>
+
+      <div class="ask-drawer" id="ask-drawer" hidden>
+        <button class="ask-close" id="ask-close" aria-label="Close">×</button>
+        <div id="ask-body"></div>
       </div>
     </section>
   </div>

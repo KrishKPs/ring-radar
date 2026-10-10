@@ -177,6 +177,48 @@ body {
 .learned-row .lr-val { font-weight: 600; text-align: right; }
 .learned-actions { display: flex; gap: 8px; margin-top: 10px; }
 
+/* ---------- Nessie chip ---------- */
+.nessie-chip { font-size: 11px; color: var(--mut); padding: 2px 2px; }
+.nessie-chip::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-right: 6px; vertical-align: middle; }
+.nessie-chip.mock::before { background: var(--dim); }
+.nessie-chip.setup::before { background: var(--amber); }
+
+/* ---------- ring card over the map ---------- */
+#center { position: relative; }
+.ring-card {
+  position: absolute; top: 56px; right: 18px; width: 210px; z-index: 3;
+  background: linear-gradient(160deg, #2a0f18, #150a11); border: 1px solid #5c1d2b;
+  border-radius: 11px; padding: 11px 13px; box-shadow: 0 0 22px rgba(255,77,94,.2);
+}
+.ring-card .rc-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--red); text-transform: uppercase; }
+.ring-card .rc-head { font-size: 15px; font-weight: 700; margin: 4px 0 8px; }
+.ring-card .rc-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
+.ring-card .rc-row .rc-k { color: var(--mut); }
+.ring-card .rc-row .rc-v { font-weight: 600; }
+
+/* ---------- Ask-why drawer ---------- */
+#right { position: relative; }
+.ask-drawer {
+  position: absolute; inset: 0; z-index: 10; overflow-y: auto;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px;
+}
+.ask-close { position: absolute; top: 10px; right: 12px; background: none; border: none; color: var(--mut); font-size: 22px; line-height: 1; cursor: pointer; }
+.ask-name { font-size: 18px; font-weight: 700; margin-right: 8px; }
+.ask-pill { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 6px; letter-spacing: .5px; text-transform: uppercase; }
+.ask-pill.frozen { color: var(--red); background: #3a1119; }
+.ask-pill.suspicious { color: var(--amber); background: #33270e; }
+.ask-pill.released { color: var(--green); background: #0f2a22; }
+.ask-pill.review { color: var(--amber); background: #33270e; }
+.ask-pill.normal, .ask-pill.exposed { color: var(--mut); background: var(--line); }
+.ask-risk-track { height: 7px; border-radius: 4px; background: var(--line); margin: 14px 0 4px; overflow: hidden; }
+.ask-risk-fill { height: 100%; border-radius: 4px; background: var(--red); }
+.ask-risk-lbl { font-size: 11px; color: var(--mut); }
+.ask-nums { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
+.ask-num { background: var(--panel2); border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; }
+.ask-num .an-v { font-size: 16px; font-weight: 700; }
+.ask-num .an-k { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: var(--mut); }
+.ask-reason { font-size: 13px; line-height: 1.5; color: var(--txt); margin-bottom: 14px; }
+
 @media (max-width: 1320px) {
   #app { grid-template-columns: 300px 1fr 330px; }
   .kpis { gap: 14px; }
