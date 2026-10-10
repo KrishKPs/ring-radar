@@ -33,8 +33,10 @@ export async function connectPhoton(onText: (m: Incoming) => void): Promise<Phot
       try {
         const m: any = message;
         if (m.content?.type !== "text") continue;
-        // Skip our own outgoing echoes; inbound texts have direction "inbound"
-        // (confirmed against spectrum-ts types; re-VERIFY with test-photon.ts).
+        // Skip our own outgoing messages and non-text events. VERIFIED 2026-10-10
+        // with test-photon.ts: inbound texts have direction "inbound", sender.id is
+        // the E.164 phone (e.g. "+1XXXXXXXXXX"), platform "imessage"; read receipts
+        // arrive as content.type "read" (filtered out above).
         if (m.direction && m.direction !== "inbound") continue;
         onText({ space, senderId: m.sender?.id ?? "unknown", text: m.content.text });
       } catch (e) {
