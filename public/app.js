@@ -30,6 +30,16 @@ byId("btn-reset").onclick = () => post("/api/reset");
 byId("btn-pause").onclick = () =>
   post("/api/pause").then((r) => { if (r && typeof r.paused === "boolean") { paused = r.paused; byId("btn-pause").textContent = paused ? "Resume" : "Pause"; } });
 
+// Fallback reply box: used only when Photon is offline. Posts to /api/demo/holder.
+function sendFallback() {
+  const input = byId("fallback-input"), text = input.value.trim();
+  if (!text) return;
+  input.value = "";
+  post("/api/demo/holder", { text });
+}
+byId("fallback-send").onclick = sendFallback;
+byId("fallback-input").addEventListener("keydown", (e) => { if (e.key === "Enter") sendFallback(); });
+
 document.querySelectorAll(".pill[data-thread]").forEach((b) => {
   b.onclick = () => {
     thread = b.dataset.thread;
@@ -98,7 +108,21 @@ function render(s) {
   byId("live-dot").classList.add("on");
   setText("clock", s.clock || "--:--:--");
   renderKpis(s); renderAlert(s); renderNessie(s); renderSteps(s); renderFeed(s);
-  renderMap(s); pulses(s); renderTrail(s); renderPhone(s); renderLearned(s);
+  renderMap(s); pulses(s); renderTrail(s); renderPhone(s); renderBriefing(s); renderFallback(s); renderLearned(s);
+}
+
+// Holder play-along note for the judge, shown once the agent starts texting (phase >= 4).
+function renderBriefing(s) {
+  const el = byId("briefing");
+  if ((s.phase || 0) < 4) { el.hidden = true; return; }
+  el.hidden = false;
+  setHTML(el, "<b>Play the holder.</b> You answered an online ad for a “payment processor” job. A recruiter, <b>Alex</b>, messages you on <b>Telegram</b>; you keep 10%. If asked for a backup account, read the number on your briefing card.");
+}
+
+// Fallback reply box: only when Photon is not connected (so a judge can still reply).
+function renderFallback(s) {
+  const connected = (s.agent || {}).photon === "connected";
+  byId("fallback").hidden = connected;
 }
 
 function renderKpis(s) {

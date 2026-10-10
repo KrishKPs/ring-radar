@@ -115,6 +115,8 @@
       </div>
       <div class="phone-status" id="phone-status">Victim phone — · Holder phone —</div>
 
+      <div class="briefing" id="briefing" hidden></div>
+
       <div class="phone-toggle">
         <button class="pill active" data-thread="holder">Holder</button>
         <button class="pill" data-thread="victim">Victim</button>
@@ -130,6 +132,11 @@
           </div>
           <div class="bubbles" id="bubbles"><div class="empty">No messages yet.</div></div>
         </div>
+      </div>
+
+      <div class="fallback" id="fallback" hidden>
+        <input id="fallback-input" type="text" maxlength="160" placeholder="Photon offline — type the holder's reply here…" />
+        <button class="btn" id="fallback-send">Send</button>
       </div>
 
       <div class="panel learned">

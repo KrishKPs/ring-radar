@@ -177,6 +177,14 @@ body {
 .learned-row .lr-val { font-weight: 600; text-align: right; }
 .learned-actions { display: flex; gap: 8px; margin-top: 10px; }
 
+/* ---------- holder briefing + fallback reply box ---------- */
+.briefing { font-size: 11px; line-height: 1.45; color: var(--amber); background: #221a0a; border: 1px solid #4a3a16; border-radius: 9px; padding: 8px 10px; }
+.briefing b { color: #ffd27a; }
+.fallback { display: flex; gap: 6px; }
+.fallback input { flex: 1; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-size: 12px; padding: 7px 9px; font-family: inherit; }
+.fallback input::placeholder { color: var(--dim); }
+.fallback .btn { flex: none; width: 72px; }
+
 /* ---------- Nessie chip ---------- */
 .nessie-chip { font-size: 11px; color: var(--mut); padding: 2px 2px; }
 .nessie-chip::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-right: 6px; vertical-align: middle; }

@@ -78,19 +78,39 @@ export class Agent {
     this.engine.addMessage({ at: this.engine.tickNow(), to, direction: "out", personName, text, viaPhone });
   }
 
-  // Phase 4: text the featured victim and open the holder conversation.
+  private victimEv(v: FreezeReport["victims"][number]): T.VictimEvidence {
+    return { name: v.name, amount: v.amount, outcome: v.status, where: v.whereName, hops: v.hops };
+  }
+
+  // Phase 4: open the two conversations that reach real phones FIRST and in
+  // parallel (the featured victim + the holder), so the phones buzz after one
+  // Gemini call, not one per victim. The other victims are dashboard-only and
+  // are filled in afterwards.
   private async onContact(r: FreezeReport): Promise<void> {
     const featured = r.victims.find((v) => v.status === "stopped") ?? r.victims[0];
-    for (const v of r.victims) {
-      const ev: T.VictimEvidence = { name: v.name, amount: v.amount, outcome: v.status, where: v.whereName, hops: v.hops };
-      const text = (await G.askText(P.victimInstr, "EVIDENCE: " + JSON.stringify(ev))) ?? T.victim(ev);
-      if (featured && v === featured) await this.send("victim", v.name, text);
-      else this.engine.addMessage({ at: this.engine.tickNow(), to: "victim", direction: "out", personName: v.name, text, viaPhone: false });
-    }
     this.holderEvidence = { account: r.holder.accountName, received: r.holder.received, newSenders: r.holder.newSenders, passedOnPct: r.holder.passedOnPct };
-    const opener = (await G.askText(P.holderOpenerInstr, "EVIDENCE: " + JSON.stringify(this.holderEvidence))) ?? T.holderOpener(this.holderEvidence);
-    this.holderTurns.push({ who: "AGENT", text: opener });
-    await this.send("holder", "Account holder", opener);
+
+    const first: Promise<unknown>[] = [];
+    if (featured) {
+      const ev = this.victimEv(featured);
+      first.push((async () => {
+        const text = (await G.askText(P.victimInstr, "EVIDENCE: " + JSON.stringify(ev))) ?? T.victim(ev);
+        await this.send("victim", featured.name, text);
+      })());
+    }
+    first.push((async () => {
+      const opener = (await G.askText(P.holderOpenerInstr, "EVIDENCE: " + JSON.stringify(this.holderEvidence))) ?? T.holderOpener(this.holderEvidence!);
+      this.holderTurns.push({ who: "AGENT", text: opener });
+      await this.send("holder", "Account holder", opener);
+    })());
+    await Promise.all(first);
+
+    // The remaining victims are dashboard-only; fill them in in parallel.
+    await Promise.all(r.victims.filter((v) => v !== featured).map(async (v) => {
+      const ev = this.victimEv(v);
+      const text = (await G.askText(P.victimInstr, "EVIDENCE: " + JSON.stringify(ev))) ?? T.victim(ev);
+      this.engine.addMessage({ at: this.engine.tickNow(), to: "victim", direction: "out", personName: v.name, text, viaPhone: false });
+    }));
   }
 
   // A payment refused during wave 2: text the first refused payer only.
