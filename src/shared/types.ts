@@ -125,6 +125,15 @@ export interface Snapshot {
     ringRisk: number;                 // highest risk inside the ring, 0..1
   };
   agent: AgentState;          // set by the agent through engine.setAgentState()
+  nessie?: NessieStatus;      // record counts for the dashboard's Nessie panel (balances never change in Nessie)
+}
+
+export interface NessieStatus {
+  live: boolean;              // false = NESSIE_MODE=mock, nothing is sent
+  settingUp: boolean;         // true while reset is creating the story accounts
+  accounts: number;           // story accounts created in Nessie this run
+  sent: number;               // transfers and cash-outs recorded in Nessie this run
+  failed: number;             // requests that failed this run
 }
 
 /** One row of the live transfer feed. */

@@ -218,6 +218,7 @@ export class Engine extends EventEmitter {
         ringRisk: Math.round(ringRisk * 100) / 100,
       },
       agent: this.agent,
+      nessie: this.nessie.status(),
     };
   }
 
@@ -384,12 +385,16 @@ export class Engine extends EventEmitter {
       ...all.filter(a => a.kind === "person" && !a.victim).slice(0, NESSIE_EXTRA_PEOPLE).map(a => ({ a, balance: BALANCE.person })),
     ];
     console.log(`Setting up ${story.length} accounts in Nessie...`);
+    this.log("Setting up accounts in Nessie...");
     const start = Date.now();
     try {
-      await this.nessie.createAccounts(story.map(({ a, balance }) => {
-        const first = a.victim ? a.name : `Acct${a.last4}`;
-        return { engineId: a.id, first, nickname: `${first} checking`, balance };
-      }));
+      const done = this.nessie.createAccounts(
+        story.map(({ a, balance }) => {
+          const first = a.victim ? a.name : `Acct${a.last4}`;
+          return { engineId: a.id, first, nickname: `${first} checking`, balance };
+        }));
+      this.emit("snapshot", this.snapshot());   // dashboard shows "setting up" while we wait
+      await done;
       console.log(`Nessie ready: ${this.nessie.idOf.size} accounts in ${((Date.now() - start) / 1000).toFixed(1)} s`);
     } catch (e) {
       console.error("Nessie setup failed; continuing with the accounts created so far.", e);

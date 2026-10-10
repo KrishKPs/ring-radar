@@ -51,6 +51,15 @@ Mock modes for working without the network: `NESSIE_MODE=mock`, `PHOTON_MODE=ter
 - Keep functions short. No classes except `Engine`, `NessieSync`, `Agent`.
 - Logs: `console.log` for normal flow, `console.warn` for fallbacks, `console.error` for failures. Never log API keys.
 
+## Nessie facts verified in Stage 1 (these override BUILD_GUIDE 10.1, 10.5 and 17.4)
+
+- Base URL is `https://api.nessieisreal.com`. Plain `http://` refuses connections; `api.reimaginebanking.com` does not resolve.
+- Create customer and create account work as the guide says (`201`, id at `objectCreated._id`). A starting balance of `0` is accepted.
+- Transfers take exactly `{ status: "pending", amount, transaction_date, description }`. There is **no payee field** (`payee_id`, `medium` are rejected), so `nessie.transfer()` writes the receiver's Nessie id into the description. Transfers are stored on the payer only.
+- Withdrawals work as the guide says (`medium: "balance"`, `amount`, `transaction_date`, `description`).
+- **Balances never change** (transfers stay `pending`, withdrawals do not move them either). The dashboard shows the Nessie record count from `snap.nessie`, never balances. In the pitch say "every payment is a real Nessie record", not "a balance changing".
+- Listing transfers returns `id` (not `_id`) and `404` when there are none.
+
 ## Engine invariants (lane: engine)
 
 - `Engine.step()` is synchronous. **Never `await` a network call inside it.** Nessie writes go through the `NessieSync` queue.

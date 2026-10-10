@@ -37,7 +37,7 @@ npm run wipe             # delete demo data in Nessie
 - Node.js, TypeScript, Express, dotenv, tsx
 
 **AI assistance**
-- We used Cursor with Claude Opus as an AI coding assistant to write and debug code during the hackathon,
+- Claude Code and Cursor (with Claude) helped write and debug the code during the hackathon,
   following our own design document. We designed the system, reviewed every change, and tested it ourselves.
 - Gemini runs inside the product (see above).
 
