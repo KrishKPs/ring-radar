@@ -28,7 +28,11 @@ export function startServer(engine: Engine, port: number, setTickMs: (ms: number
     await engine.reset(seed === undefined || seed === "" ? undefined : Number(seed));
     ok(r, { seed: engine.seed });
   });
-  app.post("/api/pause", (q, r) => { engine.pause(!!q.body?.on); ok(r); });
+  app.post("/api/pause", (q, r) => {
+    const raw = q.body?.on;
+    const paused = engine.pause(raw === undefined ? undefined : !!raw);
+    ok(r, { paused });
+  });
   app.post("/api/speed", (q, r) => { const ms = Math.min(1200, Math.max(300, +q.body?.ms || 600)); setTickMs(ms); ok(r, { ms }); });
   app.post("/api/pay", (q, r) => { r.json(engine.manualPay(String(q.body?.from), String(q.body?.to), Math.round(+q.body?.amount))); });
   app.post("/api/release", (q, r) => { engine.release(String(q.body?.id)); ok(r); });

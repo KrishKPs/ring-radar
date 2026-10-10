@@ -131,7 +131,11 @@ export class Engine extends EventEmitter {
     this.emit("snapshot", this.snapshot());
   }
 
-  pause(on: boolean): void { this.paused = on; }
+  /** With no argument, toggles. The dashboard Pause button posts `{}`. */
+  pause(on?: boolean): boolean {
+    this.paused = on === undefined ? !this.paused : on;
+    return this.paused;
+  }
 
   launch(): void {
     if (this.attackRunning || this.resetting) return;
