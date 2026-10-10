@@ -1,9 +1,10 @@
 import express from "express";
 import type { Response } from "express";
 import type { Engine } from "./engine/engine.js";
+import type { Agent } from "./agent/agent.js";
 import type { Snapshot } from "./shared/types.js";
 
-export function startServer(engine: Engine, port: number, setTickMs: (ms: number) => void) {
+export function startServer(engine: Engine, agent: Agent, port: number, setTickMs: (ms: number) => void) {
   const app = express();
   app.use(express.json());
   app.use(express.static("public"));
@@ -37,6 +38,18 @@ export function startServer(engine: Engine, port: number, setTickMs: (ms: number
   app.post("/api/pay", (q, r) => { r.json(engine.manualPay(String(q.body?.from), String(q.body?.to), Math.round(+q.body?.amount))); });
   app.post("/api/release", (q, r) => { engine.release(String(q.body?.id)); ok(r); });
   app.get("/api/explain/:id", (q, r) => { r.json(engine.explain(q.params.id)); });
+  // Wave 2 is a Stage 4 extra; the route exists so the dashboard button has somewhere to post.
+  app.post("/api/regroup", (_q, r) => { r.status(501).json({ ok: false, error: "regroup not built yet" }); });
+  app.post("/api/ask", async (q, r) => {
+    r.json({ answer: await agent.answerAnalyst(String(q.body?.id), String(q.body?.question ?? "").slice(0, 200)) });
+  });
+  // Fallback when Photon is down: a holder reply typed on the dashboard.
+  app.post("/api/demo/holder", async (q, r) => {
+    const text = String(q.body?.text ?? "").trim().slice(0, 300);
+    if (!text) { r.status(400).json({ ok: false, error: "text required" }); return; }
+    await agent.handleHolderText(text, false);
+    ok(r);
+  });
 
   app.listen(port, () => console.log(`Ring Radar on http://localhost:${port}`));
 }
