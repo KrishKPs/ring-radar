@@ -3,7 +3,7 @@ import type { Response } from "express";
 import type { Engine } from "./engine/engine.js";
 import type { Snapshot } from "./shared/types.js";
 
-export function startServer(engine: Engine, port: number) {
+export function startServer(engine: Engine, port: number, setTickMs: (ms: number) => void) {
   const app = express();
   app.use(express.json());
   app.use(express.static("public"));
@@ -29,6 +29,10 @@ export function startServer(engine: Engine, port: number) {
     ok(r, { seed: engine.seed });
   });
   app.post("/api/pause", (q, r) => { engine.pause(!!q.body?.on); ok(r); });
+  app.post("/api/speed", (q, r) => { const ms = Math.min(1200, Math.max(300, +q.body?.ms || 600)); setTickMs(ms); ok(r, { ms }); });
+  app.post("/api/pay", (q, r) => { r.json(engine.manualPay(String(q.body?.from), String(q.body?.to), Math.round(+q.body?.amount))); });
+  app.post("/api/release", (q, r) => { engine.release(String(q.body?.id)); ok(r); });
+  app.get("/api/explain/:id", (q, r) => { r.json(engine.explain(q.params.id)); });
 
   app.listen(port, () => console.log(`Ring Radar on http://localhost:${port}`));
 }

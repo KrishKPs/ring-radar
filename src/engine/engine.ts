@@ -7,14 +7,20 @@ import type { NessieSync } from "../nessie/sync.js";
 import { int, mulberry32, pick, type Rng } from "./rng.js";
 import { buildWorld, type World } from "./world.js";
 import { score } from "./score.js";
-import { detectRing } from "./detect.js";
+import { CANDIDATE_BASE, detectRing } from "./detect.js";
+import { explainAccount, type AccountExplanation } from "./explain.js";
 
 const WARMUP_TICKS = 150;
 const SPEND_SHOPS = ["S0", "S1", "S3", "S4"];
 const PAYROLL = "S2";
-const FREEZE_AFTER = 2;     // ticks from detection to freeze
-const TRACE_AFTER = 4;      // ticks from detection to "traced"
+// Ticks from detection to each later phase (BUILD_GUIDE 9.7)
+const FREEZE_AFTER = 2;
+const TRACE_AFTER = 4;
+const CONTACT_AFTER = 6;
+const CASE_AFTER = 9;
 const DOWNSTREAM_RISK = 0.5;
+const LONE_BASE = 0.9;
+const MANUAL_MAX = 10000;
 const NESSIE_EXTRA_PEOPLE = 4;
 const BALANCE = { victim: 3000, ring: 0, person: 2500 };
 
@@ -59,6 +65,7 @@ export class Engine extends EventEmitter {
   private firstScamTick: number | null = null;
   private freezeTick: number | null = null;
   private messages: AgentMessage[] = [];
+  private holderStatements: string[] = [];
   private phaseClock: (string | null)[] = [null, null, null, null, null, null];
   private agent: AgentState = { photon: "starting", phones: { victim: false, holder: false }, busy: false, facts: null };
 
@@ -95,6 +102,7 @@ export class Engine extends EventEmitter {
     this.ring = [];
     this.detectedAt = this.launchedAt = this.firstScamTick = this.freezeTick = null;
     this.messages = [];
+    this.holderStatements = [];
     this.phaseClock = [null, null, null, null, null, null];
     this.agent = { ...this.agent, busy: false, facts: null };
     this.nessie.clear();
@@ -140,11 +148,70 @@ export class Engine extends EventEmitter {
     this.log(`Attack launched: scammers send ${this.plan.wave1.length} victims to ${this.muleIds.length} mule accounts.`, true);
   }
 
+  /** Analyst button: "flagged by mistake". Released accounts score 0 and are skipped by every rule this run. */
+  release(id: string): void {
+    const a = this.accounts.get(id);
+    if (!a || a.released) return;
+    a.frozen = false; a.released = true; a.review = false;
+    this.log(`Analyst released ${a.name}: flagged by mistake.`, true);
+  }
+
+  clearReview(id: string): void {
+    const a = this.accounts.get(id);
+    if (a) a.review = false;
+  }
+
+  /** A payment typed on the dashboard. Refused when either end is frozen. */
+  manualPay(from: string, to: string, amount: number): { ok: boolean; message: string } {
+    const a = this.accounts.get(from), b = this.accounts.get(to);
+    if (!a || !b || from === to) return { ok: false, message: "Pick two different accounts." };
+    if (!(amount >= 1 && amount <= MANUAL_MAX)) return { ok: false, message: `Amount must be $1 to ${money(MANUAL_MAX)}.` };
+    const t = this.addTransfer(from, to, amount, "manual");
+    this.pushFeed(t);
+    if (t.blocked) {
+      const frozen = a.frozen ? a : b;
+      this.log(`${a.name} tried to pay ${money(amount)} to ${b.name}. Refused: ${frozen.name} is frozen.`, true);
+      return { ok: false, message: `Refused: ${frozen.name} is frozen.` };
+    }
+    this.log(`${a.name} paid ${money(amount)} to ${b.name}.`);
+    return { ok: true, message: `${a.name} paid ${money(amount)} to ${b.name}.` };
+  }
+
   // ---------- agent hooks ----------
 
   addMessage(m: AgentMessage): void { this.messages.push(m); }
 
   setAgentState(p: Partial<AgentState>): void { this.agent = { ...this.agent, ...p }; }
+
+  /** Rule 6: the holder named an account. Only a brand-new account is frozen on one person's word. */
+  nameAccount(last4: string): "frozen" | "already-frozen" | "review" | "unknown" {
+    const a = [...this.accounts.values()].find(x => x.last4 === last4);
+    if (!a) { this.log(`Account holder named ••${last4}: no account has that number.`); return "unknown"; }
+    if (a.frozen) return "already-frozen";
+    if (a.opened === "new" && !a.released) {
+      this.freeze(a.id, "named");
+      this.log(`${a.name} frozen: named by the account holder, and it is a brand-new account.`, true);
+      return "frozen";
+    }
+    a.review = true;
+    this.log(`${a.name} named by the account holder. It is an established account, so it goes to review, not a freeze.`, true);
+    return "review";
+  }
+
+  recordHolderStatement(text: string): void {
+    this.holderStatements.push(text.slice(0, 300));
+    this.log(`Account holder says: ${text.slice(0, 120)}`);
+  }
+
+  hasLast4(d: string): boolean { return [...this.accounts.values()].some(a => a.last4 === d); }
+
+  explain(id: string): AccountExplanation {
+    const a = this.accounts.get(id);
+    if (!a) return { id, name: id, label: "Unknown", risk: 0, base: 0, atFreeze: false, newSenders: 0, passedOnPct: 0,
+                     received: 0, age: "Established", reason: "No account has this id in the current run." };
+    const paidRing = this.transfers.some(t => t.from === id && this.isRingAccount(t.to));
+    return explainAccount(a, x => this.name(x), paidRing);
+  }
 
   // ---------- read helpers (server, agent, eval) ----------
 
@@ -244,7 +311,11 @@ export class Engine extends EventEmitter {
     if (this.attackRunning && this.detectedAt === null) this.tryDetect(win);
     else if (this.detectedAt !== null) this.advancePhases();
 
-    // 5. feed for the dashboard: this tick's transfers with the receiver's new risk
+    // 5. extra freeze rules
+    if (this.phase >= 2) this.joinRule(win);
+    this.loneRule(win);
+
+    // 6. feed for the dashboard: this tick's transfers with the receiver's new risk
     for (const t of this.newTransfers) this.pushFeed(t);
   }
 
@@ -339,6 +410,36 @@ export class Engine extends EventEmitter {
     if (this.phase === 2 && since >= TRACE_AFTER) {
       this.setPhase(3);
       this.log(`Money traced for ${this.parcels.length} payments.`, true);
+    }
+    if (this.phase === 3 && since >= CONTACT_AFTER) {
+      this.setPhase(4);
+      this.log("Contacting the people involved.", true);
+      this.emit("contact", this.freezeReport()!);
+    }
+    if (this.phase === 4 && since >= CASE_AFTER) {
+      this.setPhase(5);
+      this.log("Case file ready.", true);
+    }
+  }
+
+  // Rule 3: a suspicious account that sent money into the frozen ring joins it (a mule missed by detection)
+  private joinRule(win: Transfer[]): void {
+    for (const t of win) {
+      const a = this.accounts.get(t.from), b = this.accounts.get(t.to);
+      if (!a || !b?.frozen || a.frozen || a.released || a.base < CANDIDATE_BASE) continue;
+      this.freeze(a.id, "joined", b.id);
+      this.log(`${a.name} joined the frozen ring: it passed strangers' money to ${b.name}.`, true);
+    }
+  }
+
+  // Rule 5: an account that looks like a mule on its own and cashes out (the backup account in wave 2)
+  private loneRule(win: Transfer[]): void {
+    for (const t of win) {
+      if (t.to !== "OUT") continue;
+      const a = this.accounts.get(t.from)!;
+      if (a.frozen || a.released || a.base < LONE_BASE) continue;
+      this.freeze(a.id, "lone");
+      this.log(`${a.name} frozen on its own: strangers' money in, cashed straight out.`, true);
     }
   }
 

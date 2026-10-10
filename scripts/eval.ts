@@ -9,7 +9,7 @@ const N = Number(process.argv[2] ?? 100);
 const FIRST_SEED = 1000;     // held out: thresholds were never tuned on these seeds
 const CALM_TICKS = 30;
 const MAX_TICKS = 400;
-const SETTLE_TICKS = 40;     // after phase 3, let in-flight money finish moving
+const SETTLE_TICKS = 40;     // after phase 5, let in-flight money finish moving
 const NO_ATTACK_TICKS = 300;
 
 const median = (a: number[]) => { const b = a.slice().sort((x, y) => x - y); return b[Math.floor(b.length / 2)] ?? 0; };
@@ -27,7 +27,7 @@ for (let seed = FIRST_SEED; seed < FIRST_SEED + N; seed++) {
   const falseBefore = e.frozenIds().length;
   e.launch();
   let ticks = 0;
-  while (e.phase < 3 && ticks++ < MAX_TICKS) e.step();
+  while (e.phase < 5 && ticks++ < MAX_TICKS) e.step();
   for (let i = 0; i < SETTLE_TICKS; i++) e.step();
   const ring = e.ringIds();
   const t = e.totals();

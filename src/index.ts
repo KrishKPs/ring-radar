@@ -7,6 +7,7 @@ const nessie = new NessieSync();
 const engine = new Engine({ seed: config.seed, nessie, verbose: true });
 await engine.reset(config.seed);
 
-setInterval(() => engine.step(), config.tickMs);
+let timer = setInterval(() => engine.step(), config.tickMs);
+const setTickMs = (ms: number) => { clearInterval(timer); timer = setInterval(() => engine.step(), ms); };
 
-startServer(engine, config.port);
+startServer(engine, config.port, setTickMs);
