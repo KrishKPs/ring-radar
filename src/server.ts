@@ -21,5 +21,14 @@ export function startServer(engine: Engine, port: number) {
     for (const c of clients) c.write(line);
   });
 
+  const ok = (res: Response, extra: object = {}) => res.json({ ok: true, ...extra });
+  app.post("/api/launch", (_q, r) => { engine.launch(); ok(r); });
+  app.post("/api/reset", async (q, r) => {
+    const seed = q.body?.seed;
+    await engine.reset(seed === undefined || seed === "" ? undefined : Number(seed));
+    ok(r, { seed: engine.seed });
+  });
+  app.post("/api/pause", (q, r) => { engine.pause(!!q.body?.on); ok(r); });
+
   app.listen(port, () => console.log(`Ring Radar on http://localhost:${port}`));
 }
