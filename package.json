@@ -1,0 +1,26 @@
+{
+  "name": "ring-radar",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ring Radar: catch scam mule rings while they happen. HackNC 2026.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "eval": "tsx scripts/eval.ts",
+    "wipe": "tsx scripts/nessie-wipe.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@google/genai": "^2.28.0",
+    "dotenv": "^18.0.7",
+    "express": "^5.3.0",
+    "spectrum-ts": "^12.10.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3"
+  }
+}
