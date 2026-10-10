@@ -7,7 +7,7 @@ export const config = {
   tickMs: num(process.env.TICK_MS, 600),
   seed: process.env.SEED ? +process.env.SEED : undefined,
   nessie: {
-    base: process.env.NESSIE_BASE ?? "http://api.nessieisreal.com",
+    base: process.env.NESSIE_BASE ?? "https://api.nessieisreal.com",
     key: process.env.NESSIE_KEY ?? "",
     mode: (process.env.NESSIE_MODE ?? "live") as "live" | "mock",
   },

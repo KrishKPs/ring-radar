@@ -31,8 +31,9 @@ export const customerBody = (first: string, last: string) => ({
   address: { street_number: "100", street_name: "Franklin St", city: "Chapel Hill", state: "NC", zip: "27514" },
 });
 export const accountBody = (nickname: string, balance: number) => ({ type: "Checking", nickname, rewards: 0, balance });
+// Nessie's transfer schema has no payee field (it rejects payee_id), so the receiving account goes in the description
 export const transferBody = (toAccountId: string, amount: number, description: string) => ({
-  medium: "balance", payee_id: toAccountId, amount, transaction_date: today(), description,
+  status: "pending", amount, transaction_date: today(), description: `${description} -> ${toAccountId}`,
 });
 export const withdrawalBody = (amount: number, description: string) => ({
   medium: "balance", amount, transaction_date: today(), description,
@@ -52,6 +53,6 @@ export const nessie = {
     return idOf(await call<Created>("POST", `/accounts/${accountId}/withdrawals`, withdrawalBody(amount, description)));
   },
   getAccount: (id: string) => call<{ balance: number; nickname: string }>("GET", `/accounts/${id}`),
-  listTransfers: (id: string, type: "payer" | "payee") => call<unknown[]>("GET", `/accounts/${id}/transfers?type=${type}`),
+  listTransfers: (id: string) => call<unknown[]>("GET", `/accounts/${id}/transfers`),
   deleteAll: (type: "Customers" | "Accounts" | "Transfers" | "Withdrawals") => call("DELETE", `/data?type=${type}`),
 };

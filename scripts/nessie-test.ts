@@ -1,6 +1,6 @@
 // Stage 1: one customer, two accounts, one transfer. Prints raw responses to check the VERIFY items in BUILD_GUIDE 10.1.
 import { config } from "../src/config.js";
-import { accountBody, customerBody, rawCall, transferBody } from "../src/nessie/client.js";
+import { accountBody, customerBody, rawCall, transferBody, withdrawalBody } from "../src/nessie/client.js";
 
 if (!config.nessie.key) {
   console.error("NESSIE_KEY is empty. Put it in .env first.");
@@ -30,10 +30,11 @@ const aId = newId(a), bId = newId(b);
 if (!aId || !bId) { console.error("\nMissing an account _id. Look at the responses above."); process.exit(1); }
 
 await show("transfer A -> B $250", "POST", `/accounts/${aId}/transfers`, transferBody(bId, 250, "stage1 test transfer"));
+await show("cash-out $40 from A", "POST", `/accounts/${aId}/withdrawals`, withdrawalBody(40, "stage1 test cash-out"));
 
 await show("account A right after transfer", "GET", `/accounts/${aId}`);
 await show("account B right after transfer", "GET", `/accounts/${bId}`);
-await show("A transfers as payer", "GET", `/accounts/${aId}/transfers?type=payer`);
+await show("A transfers", "GET", `/accounts/${aId}/transfers`);
 
 await new Promise(r => setTimeout(r, 5000));
 await show("account A after 5 s", "GET", `/accounts/${aId}`);
