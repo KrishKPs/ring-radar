@@ -372,3 +372,6 @@ body[data-phase="watching"] #status > .st-steps, body[data-phase="suspicious"] #
 .v-name { min-width: 96px; }
 .v-hops { flex-wrap: nowrap; overflow: hidden; }
 @media (max-height: 860px) { .drawer { height: 36vh; } }
+.live-dot.paused { background: var(--warn); }
+/* Keep the live label visible on narrow screens when it says "Paused". */
+@media (max-width: 1500px) { .live-label { display: inline; } }
