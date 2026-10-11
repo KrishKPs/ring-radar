@@ -9,6 +9,7 @@ import { buildWorld, type World } from "./world.js";
 import { score } from "./score.js";
 import { CANDIDATE_BASE, detectRing } from "./detect.js";
 import { explainAccount, type AccountExplanation } from "./explain.js";
+import { buildCaseFile } from "./caseFile.js";
 
 const WARMUP_TICKS = 150;
 const SPEND_SHOPS = ["S0", "S1", "S3", "S4"];
@@ -66,6 +67,7 @@ export class Engine extends EventEmitter {
   private freezeTick: number | null = null;
   private messages: AgentMessage[] = [];
   private holderStatements: string[] = [];
+  private caseFile: string | null = null;
   private phaseClock: (string | null)[] = [null, null, null, null, null, null];
   private agent: AgentState = { photon: "starting", phones: { victim: false, holder: false }, busy: false, facts: null };
 
@@ -103,6 +105,7 @@ export class Engine extends EventEmitter {
     this.detectedAt = this.launchedAt = this.firstScamTick = this.freezeTick = null;
     this.messages = [];
     this.holderStatements = [];
+    this.caseFile = null;
     this.phaseClock = [null, null, null, null, null, null];
     this.agent = { ...this.agent, busy: false, facts: null };
     this.nessie.clear();
@@ -150,6 +153,20 @@ export class Engine extends EventEmitter {
       d += int(this.rng, 3, 5);
     }
     this.log(`Attack launched: scammers send ${this.plan.wave1.length} victims to ${this.muleIds.length} mule accounts.`, true);
+  }
+
+  /** Analyst "let the scammers regroup": wave 2 sends new victims to the backup account. */
+  regroup(): void {
+    if (this.wave2 !== "ready" || this.resetting) return;
+    this.wave = 2;
+    this.wave2 = "running";
+    this.backupKnownBeforeWave2 = !!this.accounts.get("BK")?.frozen; // true = the holder already exposed it
+    let d = 2;
+    for (const v of this.plan.wave2) {
+      this.at(d, () => this.pay(v.id, "BK", v.amount));
+      d += int(this.rng, 3, 5);
+    }
+    this.log(`Scammers regroup: ${this.plan.wave2.length} more victims sent to a backup account.`, true);
   }
 
   /** Analyst button: "flagged by mistake". Released accounts score 0 and are skipped by every rule this run. */
@@ -279,7 +296,7 @@ export class Engine extends EventEmitter {
       parcels: this.parcels,
       totals: this.totals(),
       log: this.logLines,
-      caseFile: null,
+      caseFile: this.caseFile,
       messages: this.messages,
       feed: this.feed,
       phaseClock: this.phaseClock,
@@ -318,6 +335,14 @@ export class Engine extends EventEmitter {
     // 5. extra freeze rules
     if (this.phase >= 2) this.joinRule(win);
     this.loneRule(win);
+
+    // 5b. wave 2 finishes once all its payments have resolved
+    if (this.wave2 === "running" && this.events.length === 0 && !this.parcels.some(p => p.status === "moving")) {
+      this.wave2 = "done";
+      this.log(this.backupKnownBeforeWave2
+        ? "Second wave stopped: every payment to the backup account was refused, because the holder exposed it."
+        : "Second wave caught: the backup account showed its pattern and was frozen.", true);
+    }
 
     // 6. feed for the dashboard: this tick's transfers with the receiver's new risk
     for (const t of this.newTransfers) this.pushFeed(t);
@@ -422,8 +447,25 @@ export class Engine extends EventEmitter {
     }
     if (this.phase === 4 && since >= CASE_AFTER) {
       this.setPhase(5);
+      this.buildCase();
       this.log("Case file ready.", true);
     }
+  }
+
+  private buildCase(): void {
+    const report = this.freezeReport();
+    if (!report) return;
+    this.caseFile = buildCaseFile({
+      caseId: "RR-0001",
+      seed: this.seed,
+      detectedClock: this.phaseClock[1],
+      frozenClock: this.phaseClock[2],
+      attackToFreezeSec: this.freezeTick !== null && this.firstScamTick !== null ? (this.freezeTick - this.firstScamTick) * 15 : null,
+      report,
+      ringNames: report.ringAccountIds.map(id => this.name(id)),
+      facts: this.agent.facts,
+      statements: this.holderStatements,
+    });
   }
 
   // Rule 3: a suspicious account that sent money into the frozen ring joins it (a mule missed by detection)

@@ -35,6 +35,14 @@ export class Agent {
 
   async start(): Promise<void> {
     this.engine.setAgentState({ photon: "starting" });
+    // Register engine listeners first (synchronously) so no event is missed even
+    // if Photon is slow to connect.
+    this.engine.on("contact", (r: FreezeReport) => void this.onContact(r));
+    this.engine.on("paymentRefused", (e: { parcel: Parcel; victimName: string; whereName: string }) => void this.onRefused(e));
+    this.engine.on("reset", () => {
+      this.holderTurns = []; this.named.clear(); this.holderEvidence = null;
+      this.refusedSent = false; this.facts = Agent.emptyFacts();
+    });
     try {
       await connectPhoton((m) => this.onText(m));
       this.engine.setAgentState({ photon: "connected" });
@@ -42,12 +50,6 @@ export class Agent {
       console.error("Photon unavailable, dashboard-only mode", e);
       this.engine.setAgentState({ photon: "dashboard-only" });
     }
-    this.engine.on("contact", (r: FreezeReport) => void this.onContact(r));
-    this.engine.on("paymentRefused", (e: { parcel: Parcel; victimName: string; whereName: string }) => void this.onRefused(e));
-    this.engine.on("reset", () => {
-      this.holderTurns = []; this.named.clear(); this.holderEvidence = null;
-      this.refusedSent = false; this.facts = Agent.emptyFacts();
-    });
   }
 
   private phones() { return { victim: !!this.spaces.victim, holder: !!this.spaces.holder }; }

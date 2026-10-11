@@ -8,6 +8,8 @@
 let snap = null;
 let thread = "holder";        // which phone thread is shown
 let paused = false;           // tracked from /api/pause responses
+let activeTab = "network";    // network | trail | case
+let prevPhase = 0;            // to flash the alert card on first detection
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ---------- data in ---------- */
@@ -40,6 +42,8 @@ function sendFallback() {
 byId("fallback-send").onclick = sendFallback;
 byId("fallback-input").addEventListener("keydown", (e) => { if (e.key === "Enter") sendFallback(); });
 
+byId("btn-regroup").onclick = () => post("/api/regroup");
+
 document.querySelectorAll(".pill[data-thread]").forEach((b) => {
   b.onclick = () => {
     thread = b.dataset.thread;
@@ -48,7 +52,13 @@ document.querySelectorAll(".pill[data-thread]").forEach((b) => {
   };
 });
 document.querySelectorAll(".tab[data-tab]").forEach((t) => {
-  t.onclick = () => document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x === t));
+  t.onclick = () => {
+    activeTab = t.dataset.tab;
+    document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x === t));
+    byId("view-trail").hidden = activeTab !== "trail";
+    byId("view-case").hidden = activeTab !== "case";
+    if (snap) { if (activeTab === "trail") renderTrailTab(snap); if (activeTab === "case") renderCaseTab(snap); }
+  };
 });
 
 /* ---------- Ask-why: node click → GET /api/explain/:id ---------- */
@@ -86,6 +96,12 @@ function clientLabel(a) {
 
 /* ---------- narration §12.5 ---------- */
 function narrate(s) {
+  if (s.wave2 === "running") return s.backupKnownBeforeWave2
+    ? "The scammers switched to their backup account, but the account holder already told us about it."
+    : "The scammers switched to a backup account nobody told us about. It has to show its pattern first.";
+  if (s.wave2 === "done") return s.backupKnownBeforeWave2
+    ? "Second wave stopped completely, because one honest answer exposed the backup account."
+    : "Second wave caught, but only after some money left.";
   const p = s.phase || 0;
   if (p === 0) return s.attackRunning
     ? "A scam is running. Victims are paying accounts they have never paid, and those accounts pass the money on within seconds."
@@ -109,6 +125,39 @@ function render(s) {
   setText("clock", s.clock || "--:--:--");
   renderKpis(s); renderAlert(s); renderNessie(s); renderSteps(s); renderFeed(s);
   renderMap(s); pulses(s); renderTrail(s); renderPhone(s); renderBriefing(s); renderFallback(s); renderLearned(s);
+  byId("btn-regroup").hidden = s.wave2 !== "ready";
+  if (activeTab === "trail") renderTrailTab(s);
+  if (activeTab === "case") renderCaseTab(s);
+  if ((s.phase || 0) >= 1 && prevPhase < 1 && !reducedMotion) {
+    const c = byId("alert-card"); c.classList.add("flash"); setTimeout(() => c.classList.remove("flash"), 1300);
+  }
+  prevPhase = s.phase || 0;
+}
+
+// Money trail tab: the full table of every victim payment.
+function renderTrailTab(s) {
+  const parcels = s.parcels || [];
+  if (!parcels.length) { setHTML(byId("view-trail"), '<div class="case-empty">No victim payments yet.</div>'); return; }
+  const hop = (id) => (id === "OUT" ? "cashed out" : (accById[id] ? labelName(accById[id]) : id));
+  const nameOf = (id) => (accById[id] ? accById[id].name : id);
+  const pill = { stopped: ["frozen", "FROZEN"], lost: ["lost", "CASHED OUT"], refused: ["blocked", "PAYMENT BLOCKED"], moving: ["moving", "MOVING"] };
+  const rows = parcels.map((p) => {
+    const st = pill[p.status] || pill.moving;
+    return "<tr><td>" + esc(nameOf(p.victim)) + "</td><td>" + money(p.amount) + '</td><td class="t-path">' +
+      esc((p.path || []).map(hop).join(" → ")) + '</td><td><span class="pill-status ' + st[0] + '">' + st[1] + "</span></td><td>" + (p.wave || 1) + "</td></tr>";
+  }).join("");
+  setHTML(byId("view-trail"), '<table class="trail-table"><thead><tr><th>Victim</th><th>Amount</th><th>Path</th><th>Status</th><th>Wave</th></tr></thead><tbody>' + rows + "</tbody></table>");
+}
+
+// Case tab: the case file (with Copy) and the event log beneath it.
+function renderCaseTab(s) {
+  const el = byId("view-case"), cf = s.caseFile;
+  const log = (s.log || []).map((l) => '<div class="cl-row' + (l.key ? " key" : "") + '">' + esc(l.clock) + " · " + esc(l.text) + "</div>").join("");
+  if (!cf) { setHTML(el, '<div class="case-empty">The case file is written once the ring is fully handled (phase 5).</div><div class="case-log">' + log + "</div>"); return; }
+  setHTML(el, '<div class="case-head"><span class="panel-label">Case file</span><button class="btn" id="case-copy" style="width:90px">Copy</button></div>' +
+    '<pre class="case-pre">' + esc(cf) + "</pre>" + '<div class="case-log">' + log + "</div>");
+  const btn = byId("case-copy");
+  if (btn) btn.onclick = () => { if (navigator.clipboard) navigator.clipboard.writeText(cf); };
 }
 
 // Holder play-along note for the judge, shown once the agent starts texting (phase >= 4).
@@ -230,10 +279,10 @@ function renderMap(s) {
     } else {
       const st = clientLabel(a);
       if (st === "frozen") {
-        shape = '<circle cx="' + x + '" cy="' + y + '" r="11" fill="#ff4d5e"/><circle cx="' + x + '" cy="' + y + '" r="22" fill="none" stroke="#ff4d5e" stroke-width="1.5" stroke-dasharray="4 5"/>';
+        shape = '<circle cx="' + x + '" cy="' + y + '" r="11" fill="#ff4d5e" filter="url(#glow)"/><circle cx="' + x + '" cy="' + y + '" r="22" fill="none" stroke="#ff4d5e" stroke-width="1.5" stroke-dasharray="4 5"/>';
         lab = label(x, y + 26, labelName(a), true);
       } else if (st === "suspicious") {
-        shape = '<circle cx="' + x + '" cy="' + y + '" r="11" fill="#ff4d5e"/>';
+        shape = '<circle cx="' + x + '" cy="' + y + '" r="11" fill="#ff4d5e" filter="url(#glow)"/>';
         lab = label(x, y + 26, labelName(a), true);
       } else if (st === "released") {
         shape = '<circle cx="' + x + '" cy="' + y + '" r="9" fill="#33d69f"/>';
@@ -388,9 +437,19 @@ function fillDrawer(x) {
     '<div class="ask-risk-track"><div class="ask-risk-fill" style="width:' + Math.round((x.risk || 0) * 100) + '%"></div></div>' +
     '<div class="ask-risk-lbl">Risk ' + (x.risk != null ? x.risk.toFixed(2) : "—") + (x.atFreeze ? " · evidence at freeze" : "") + " · " + esc(x.age) + "</div>" +
     '<div class="ask-nums">' + nums.map((n) => '<div class="ask-num"><div class="an-v">' + esc(n[1]) + '</div><div class="an-k">' + n[0] + "</div></div>").join("") + "</div>" +
-    '<div class="ask-reason">' + esc(x.reason) + "</div>" + release);
+    '<div class="ask-reason">' + esc(x.reason) + "</div>" + release +
+    '<div class="ask-ask"><input id="ask-q" type="text" placeholder="Ask why…" /><button class="btn" id="ask-go" style="width:60px">Ask</button></div>' +
+    '<div class="ask-answer" id="ask-answer"></div>');
   byId("ask-drawer").hidden = false;
   const rel = byId("ask-release");
   if (rel) rel.onclick = () => post("/api/release", { id: x.id }).then(() => openExplain(x.id));
+  const go = byId("ask-go"), q = byId("ask-q");
+  if (go) go.onclick = async () => {
+    const question = q.value.trim(); if (!question) return;
+    setText("ask-answer", "Thinking…");
+    const res = await post("/api/ask", { id: x.id, question });
+    setText("ask-answer", (res && res.answer) || "(no answer)");
+  };
+  if (q) q.addEventListener("keydown", (e) => { if (e.key === "Enter" && go) go.onclick(); });
 }
 function closeDrawer() { byId("ask-drawer").hidden = true; askId = null; }

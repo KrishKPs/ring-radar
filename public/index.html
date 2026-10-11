@@ -60,6 +60,7 @@
         <button class="btn btn-primary" id="btn-launch">Launch attack</button>
         <button class="btn" id="btn-reset">New run</button>
         <button class="btn" id="btn-pause">Pause</button>
+        <button class="btn" id="btn-regroup" hidden>Let them regroup</button>
       </div>
     </section>
 
@@ -87,6 +88,10 @@
               <stop offset="0%" stop-color="#ff4d5e" stop-opacity="0.28" />
               <stop offset="100%" stop-color="#ff4d5e" stop-opacity="0" />
             </radialGradient>
+            <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="3.2" result="b" />
+              <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
           </defs>
           <g id="g-halo"></g>
           <g id="g-edges"></g>
@@ -95,6 +100,8 @@
           <g id="g-labels"></g>
         </svg>
         <div class="ring-card" id="ring-card" hidden></div>
+        <div class="tab-view" id="view-trail" hidden></div>
+        <div class="tab-view" id="view-case" hidden></div>
         <div class="map-empty" id="map-empty">Waiting for the engine to send the network…</div>
       </div>
 
