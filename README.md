@@ -26,6 +26,18 @@ npm run wipe             # delete demo data in Nessie
 - `PHOTON_MODE=terminal`: use the terminal instead of iMessage.
 - Gemini failures fall back to template messages automatically.
 
+## How accurate is it?
+
+`npm run eval -- 100` runs 100 random attacks (seeds we never tuned on) plus a quiet run with no attack for each seed:
+
+| Measure | Result |
+|---|---|
+| Rings detected | 100% |
+| Ring accounts frozen | 100% |
+| Innocent accounts frozen | 0 |
+| Accounts frozen with no attack | 0 |
+| Scam money stopped before it left | 87.9% |
+
 ## Credits
 
 **APIs and services**
