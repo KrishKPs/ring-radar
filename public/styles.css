@@ -365,3 +365,10 @@ kbd { font: 600 12px var(--mono); background: var(--bg); border: 1px solid var(-
 }
 body[data-phase="watching"] #status > .st-steps, body[data-phase="suspicious"] #status > .st-steps { border-top-color: transparent; }
 .n-lbl.end { text-anchor: end; }
+
+/* ---------- 1280-wide polish ---------- */
+.tk-track { padding-left: 18px; mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 85%, transparent); }
+.drawer-cols { grid-template-columns: minmax(0, 1fr) minmax(220px, 0.7fr); }
+.v-name { min-width: 96px; }
+.v-hops { flex-wrap: nowrap; overflow: hidden; }
+@media (max-height: 860px) { .drawer { height: 36vh; } }

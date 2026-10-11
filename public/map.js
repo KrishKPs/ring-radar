@@ -135,7 +135,7 @@ function renderNodes(s, acc, involved) {
     const g = document.createElementNS(NS, "g");
     g.setAttribute("class", "node out");
     g.innerHTML = '<circle class="n-out" cx="' + OUT_POS.x + '" cy="' + OUT_POS.y + '" r="6"/>' +
-      '<text class="n-lbl end" x="' + (OUT_POS.x + 6) + '" y="' + (OUT_POS.y + 22) + '">Cashed out</text>';
+      '<text class="n-lbl end" x="' + (OUT_POS.x + 8) + '" y="' + (OUT_POS.y - 14) + '">Cashed out</text>';
     nodes.set("OUT", { g, look: "out" });
     gNodes.appendChild(g);
   }
@@ -255,7 +255,7 @@ function renderTags(s, acc) {
   const named = bk && facts && (facts.namedAccounts || []).some((n) => bk.name.endsWith(n.last4) && n.result === "frozen");
   let html = "";
   if (bk && bk.frozen) {
-    html = '<text class="tag fade-in" x="' + bk.x + '" y="' + (bk.y - 24) + '">' +
+    html = '<text class="tag fade-in" x="' + bk.x + '" y="' + (bk.y + 48) + '">' +
       (named ? "BACKUP · FROZEN BEFORE USE" : "BACKUP · CAUGHT BY PATTERN") + "</text>";
   }
   setHTML(gTags, html);

@@ -82,8 +82,8 @@ function wave2Line(s) {
 function renderSteps(s) {
   const phase = s.phase || 0, pc = s.phaseClock || [], t = s.totals || {};
   const victims = new Set((s.parcels || []).map((p) => p.victim)).size;
-  const labels = ["Ring detected", (t.frozen || 0) + " accounts frozen", "Money traced · " + victims + " victims",
-    "Texting victim & holder", "Case file ready"];
+  const labels = ["Ring detected", (t.frozen || 0) + " accounts frozen", victims + " victims traced",
+    "Texting the phones", "Case file ready"];
   const t0 = clockSec(pc[1]);
   let html = "", filled = 0;
   for (let i = 1; i <= 5; i++) {

@@ -69,7 +69,7 @@ function renderRows(parcels, acc) {
     const hops = (p.path || []).filter((id) => id !== "OUT")
       .map((id) => '<span class="hop mono">' + esc(acc[id] ? shortName(acc[id]) : id) + "</span>").join('<span class="arrow">→</span>');
     return '<div class="vrow"><span class="v-name">' + esc(acc[p.victim]?.name || p.victim) + ' <span class="mono dim">' + money(p.amount) + "</span></span>" +
-      '<span class="v-hops">' + (hops ? '<span class="arrow">→</span>' + hops : "") + '<span class="arrow">→</span></span><span class="outcome ' + o[0] + '">' + o[1] + "</span></div>";
+      '<span class="v-hops">' + hops + '<span class="arrow">→</span></span><span class="outcome ' + o[0] + '">' + o[1] + "</span></div>";
   }).join("");
   setHTML(byId("d-rows"), html);
 }
