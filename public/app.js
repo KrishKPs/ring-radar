@@ -44,6 +44,14 @@ byId("fallback-input").addEventListener("keydown", (e) => { if (e.key === "Enter
 
 byId("btn-regroup").onclick = () => post("/api/regroup");
 
+// Accuracy panel: static numbers written by `npm run eval` to public/eval.json.
+fetch("/eval.json").then((r) => (r.ok ? r.json() : null)).then((e) => {
+  if (!e) return;
+  byId("eval-chip").hidden = false;
+  setHTML(byId("eval-chip"), "Tested on " + e.runs + " attacks: <b>" + esc(e.detectionRate) +
+    "</b> detected · <b>" + e.innocentFrozen + "</b> innocent frozen · <b>" + esc(e.moneyStoppedShare) + "</b> money stopped");
+}).catch(() => {});
+
 document.querySelectorAll(".pill[data-thread]").forEach((b) => {
   b.onclick = () => {
     thread = b.dataset.thread;

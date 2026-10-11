@@ -191,6 +191,8 @@ body {
 .nessie-chip::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-right: 6px; vertical-align: middle; }
 .nessie-chip.mock::before { background: var(--dim); }
 .nessie-chip.setup::before { background: var(--amber); }
+.eval-chip { font-size: 10.5px; line-height: 1.45; color: var(--mut); padding: 2px; }
+.eval-chip b { color: var(--green); font-weight: 700; }
 
 /* ---------- ring card over the map ---------- */
 #center { position: relative; }

@@ -1,4 +1,5 @@
 // Accuracy evaluation: many seeds, no timers, Nessie off. Usage: npm run eval -- 100
+import { writeFileSync } from "node:fs";
 import { config } from "../src/config.js";
 import { Engine } from "../src/engine/engine.js";
 import { NessieSync } from "../src/nessie/sync.js";
@@ -70,3 +71,14 @@ const missed = rows.filter(r => !r.detected).map(r => r.seed);
 const innocentSeeds = rows.filter(r => r.innocent + r.falseBefore > 0).map(r => r.seed);
 if (missed.length) console.log("Not detected on seeds:", missed.join(", "));
 if (innocentSeeds.length) console.log("Innocent freezes on seeds:", innocentSeeds.join(", "));
+
+// Write a small summary the dashboard can show on its "tested on N attacks" panel.
+writeFileSync("public/eval.json", JSON.stringify({
+  runs: N,
+  detectionRate: (detected.length / N * 100).toFixed(1) + "%",
+  ringAccountsCaught: (sum("caught") / sum("ringSize") * 100).toFixed(1) + "%",
+  innocentFrozen: sum("innocent") + sum("falseBefore") + noAttackFrozen,
+  moneyStoppedShare: (sum("stopped") / (sum("stopped") + sum("lost")) * 100).toFixed(1) + "%",
+  generatedAt: new Date().toISOString().slice(0, 10),
+}, null, 2));
+console.log("Wrote public/eval.json");
