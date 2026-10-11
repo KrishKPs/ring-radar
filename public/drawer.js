@@ -1,4 +1,4 @@
-// Case drawer: slides up over the map + ticker once the case file is ready (engine phase 5).
+// Case drawer: a one-line tab over the map once the case file is ready (engine phase 5).
 // Holds the per-victim money trail, the timeline, and the only Release / Send-to-police buttons.
 
 import { byId, esc, money, shortName, setHTML, setText, post, clockSec, toast } from "./util.js";
@@ -40,7 +40,8 @@ function setMin(m) {
 
 export function render(s, state) {
   if (!s.caseFile) return;
-  if (!opened) { opened = true; byId("drawer").hidden = false; }
+  // Starts as a one-line tab so it never covers the map; C or a click opens it.
+  if (!opened) { opened = true; byId("drawer").hidden = false; setMin(true); }
   const t = s.totals || {}, parcels = s.parcels || [];
   const acc = {}; for (const a of s.accounts || []) acc[a.id] = a;
   const ring = (s.accounts || []).filter((a) => a.kind === "acct" && a.frozen).length;

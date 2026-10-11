@@ -7,7 +7,6 @@ import { suspiciousAccounts } from "./util.js";
 import * as header from "./header.js";
 import * as status from "./status.js";
 import * as map from "./map.js";
-import * as ticker from "./ticker.js";
 import * as incident from "./incident.js";
 import * as drawer from "./drawer.js";
 import * as controls from "./controls.js";
@@ -20,7 +19,7 @@ export const state = {
   lastTick: -1,
 };
 
-const modules = [header, status, map, ticker, incident, drawer, controls];
+const modules = [header, status, map, incident, drawer, controls];
 
 /* ---------- derived phase ---------- */
 

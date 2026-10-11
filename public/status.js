@@ -1,6 +1,6 @@
-// Left status card: current state (headline), response steps (Act 2), trust line (eval numbers).
+// Left status card: current state (big headline) and the trust line (eval numbers).
 
-import { byId, esc, money, setHTML, setText, clockSec, suspiciousAccounts, reducedMotion } from "./util.js";
+import { byId, esc, money, setHTML, setText, suspiciousAccounts, reducedMotion } from "./util.js";
 
 let lastKey = "";
 
@@ -28,7 +28,6 @@ export function render(s, state) {
     lastKey = v.key;
     if (!reducedMotion) { const w = byId("st-swap"); w.classList.remove("swap"); void w.offsetWidth; w.classList.add("swap"); }
   }
-  renderSteps(s);
 }
 
 export function reset() { lastKey = ""; }
@@ -76,26 +75,4 @@ function wave2Line(s) {
     ? "Second wave refused: one honest answer exposed the backup account."
     : "Second wave caught, after some money left.";
   return "";
-}
-
-/* ---------- response steps (step i is done once the engine reaches phase i) ---------- */
-function renderSteps(s) {
-  const phase = s.phase || 0, pc = s.phaseClock || [], t = s.totals || {};
-  const victims = new Set((s.parcels || []).map((p) => p.victim)).size;
-  const labels = ["Ring detected", (t.frozen || 0) + " accounts frozen", victims + " victims traced",
-    "Texting the phones", "Case file ready"];
-  const t0 = clockSec(pc[1]);
-  let html = "", filled = 0;
-  for (let i = 1; i <= 5; i++) {
-    const done = phase >= i, active = phase + 1 === i && phase >= 1;
-    if (done) filled = i;
-    const at = clockSec(pc[i]);
-    const time = done && t0 != null && at != null ? "+" + (at - t0) + "s" : "";
-    html += '<li class="' + (done ? "done" : active ? "active" : "pending") + '"><span class="mark"></span>' +
-      '<span class="s-lbl">' + esc(labels[i - 1]) + '</span><span class="s-time mono">' + time + "</span></li>";
-  }
-  const el = byId("steps");
-  setHTML(el, html);
-  // The connecting line fills as steps complete.
-  el.style.setProperty("--fill", filled <= 1 ? "0" : String((filled - 1) / 4));
 }

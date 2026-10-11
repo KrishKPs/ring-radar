@@ -7,7 +7,7 @@ import { byId, esc, money, shortName, setHTML, post, reducedMotion } from "./uti
 const NS = "http://www.w3.org/2000/svg";
 const VB = { x: 0, y: 0, w: 900, h: 560 };
 const OUT_POS = { x: 880, y: 300 };
-const EDGE_MAX = 120, EDGE_AGE = 60;   // 60 ticks of 15 sim-seconds = 15 sim-minutes
+const EDGE_MAX = 40, EDGE_AGE = 60;    // 60 ticks of 15 sim-seconds = 15 sim-minutes
 
 let svg, gNodes, gEdges, gPulses, gHull, gTags, hullPath, hullLabel;
 let nodes = new Map();      // id -> { g, look }
@@ -158,8 +158,12 @@ function curve(a, b, off) {
 
 function renderEdges(s, acc, involved) {
   const tick = s.tick || 0, focus = involved.size > 0;
-  const edges = (s.edges || []).filter((e) => tick - e.lastTick <= EDGE_AGE || acc[e.from]?.kind === "acct")
-    .sort((a, b) => b.lastTick - a.lastTick).slice(0, EDGE_MAX);
+  // Scam edges (anything touching a ring account or a cash-out) are always drawn;
+  // only the background payments are capped, newest first.
+  const isScam = (e) => e.to === "OUT" || acc[e.from]?.kind === "acct" || acc[e.to]?.kind === "acct";
+  const all = s.edges || [];
+  const edges = all.filter(isScam).concat(
+    all.filter((e) => !isScam(e) && tick - e.lastTick <= EDGE_AGE).sort((a, b) => b.lastTick - a.lastTick).slice(0, EDGE_MAX));
   let html = "";
   edges.forEach((e, i) => {
     const a = acc[e.from], b = e.to === "OUT" ? OUT_POS : acc[e.to];
@@ -269,6 +273,8 @@ function pulses(s, acc) {
     if (!a || !b) continue;
     const risk = t.to === "OUT" ? 1 : (b.risk || 0);
     const cls = t.blocked || risk >= 0.75 ? "p-scam" : risk >= 0.4 ? "p-warn" : "p-normal";
+    // Keep the screen calm: only suspicious or scam money moves on the map.
+    if (cls === "p-normal" && t.kind === "normal") continue;
     const dot = document.createElementNS(NS, "circle");
     dot.setAttribute("r", cls === "p-normal" ? "2.5" : "3.5");
     dot.setAttribute("class", cls);

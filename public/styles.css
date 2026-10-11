@@ -375,3 +375,11 @@ body[data-phase="watching"] #status > .st-steps, body[data-phase="suspicious"] #
 .live-dot.paused { background: var(--warn); }
 /* Keep the live label visible on narrow screens when it says "Paused". */
 @media (max-width: 1500px) { .live-label { display: inline; } }
+
+/* ---------- simpler screen: no ticker, no steps, learned card only when it has facts ---------- */
+#app { grid-template-rows: 64px minmax(0, 1fr); grid-template-areas: "header header header" "status map incident"; }
+.drawer { grid-row: 2 / 3; }
+.st-spacer { flex: 1; }
+#status > .st-spacer { padding: 0 !important; border-top: none !important; }
+.learned:not(.has-facts) { display: none; }
+.st-headline { font-size: 30px; }
