@@ -7,7 +7,8 @@ import { NessieSync } from "../src/nessie/sync.js";
 config.nessie.mode = "mock";
 
 const N = Number(process.argv[2] ?? 100);
-const FIRST_SEED = 1000;     // held out: thresholds were never tuned on these seeds
+// Held out: thresholds were never tuned on these seeds. EVAL_FIRST_SEED picks a fresh range.
+const FIRST_SEED = Number(process.env.EVAL_FIRST_SEED ?? 1000);
 const CALM_TICKS = 30;
 const MAX_TICKS = 400;
 const SETTLE_TICKS = 40;     // after phase 5, let in-flight money finish moving
