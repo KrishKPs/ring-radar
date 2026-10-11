@@ -18,7 +18,7 @@ export const config = {
   },
   gemini: {
     key: process.env.GEMINI_API_KEY ?? "",
-    model: process.env.GEMINI_MODEL ?? "gemini-3.8-flash",
+    model: process.env.GEMINI_MODEL ?? "gemini-3.1-flash-lite",
     timeoutMs: num(process.env.GEMINI_TIMEOUT_MS, 9000),
   },
   phones: {
