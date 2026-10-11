@@ -273,10 +273,9 @@ function pulses(s, acc) {
     if (!a || !b) continue;
     const risk = t.to === "OUT" ? 1 : (b.risk || 0);
     const cls = t.blocked || risk >= 0.75 ? "p-scam" : risk >= 0.4 ? "p-warn" : "p-normal";
-    // Keep the screen calm: only suspicious or scam money moves on the map.
-    if (cls === "p-normal" && t.kind === "normal") continue;
     const dot = document.createElementNS(NS, "circle");
-    dot.setAttribute("r", cls === "p-normal" ? "2.5" : "3.5");
+    // Normal payments are small and faint so scam money (red, larger) stands out.
+    dot.setAttribute("r", cls === "p-normal" ? "2" : "3.5");
     dot.setAttribute("class", cls);
     gPulses.appendChild(dot);
     // Refused payments stop halfway and show a small burst.

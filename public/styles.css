@@ -157,7 +157,7 @@ body[data-phase="watching"] .st-steps > *, body[data-phase="suspicious"] .st-ste
 .e-scam { stroke: var(--danger); stroke-width: 2.2; }
 .e-blocked { stroke: var(--danger); stroke-width: 1.4; stroke-dasharray: 3 5; }
 #g-edges path.dim { opacity: 0.08 !important; }
-.p-normal { fill: var(--text-dim); } .p-warn { fill: var(--warn); }
+.p-normal { fill: var(--text-dim); opacity: 0.55; } .p-warn { fill: var(--warn); }
 .p-scam { fill: var(--danger); filter: url(#glow); }
 .refused-burst { fill: var(--danger); font-size: 13px; font-weight: 700; text-anchor: middle; animation: burst 1.4s var(--ease) forwards; }
 @keyframes burst { 0% { opacity: 0; transform: translateY(4px); } 15% { opacity: 1; transform: none; } 75% { opacity: 1; } 100% { opacity: 0; } }
